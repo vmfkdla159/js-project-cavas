@@ -1,136 +1,118 @@
-const theLineWidth = document.querySelector("#line-width");
-const theLineColor = document.querySelector("#line-color");
-const fileInput = document.getElementById("file");
-const textInput = document.getElementById("text");
 const canvas = document.querySelector("canvas");
-const modeBtn = document.getElementById("mode-btn");
-const clearBtn = document.getElementById("clear-btn");
-const eraserBtn = document.getElementById("eraser-btn");
-const saveBtn = document.getElementById("save-btn");
-const fontOptions = document.getElementById("font-option");
-
-const colorArray = Array.from(document.getElementsByClassName("color-option"));
 const ctx = canvas.getContext("2d");
 
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 800;
+const lineWidthInput = document.getElementById("line-width");
+const colorInput = document.getElementById("line-color");
+
+const drawBtn = document.getElementById("draw-button");
+const eraserBtn = document.getElementById("eraser-button");
+const destroyBtn = document.getElementById("destroy-button");
+const fillOrStrokeBtn = document.getElementById("fill-or-stroke");
+const colorOptionsBtn = Array.from(
+  document.getElementsByClassName("color-option")
+);
+
+canvas.width = 800;
+canvas.height = 800;
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+ctx.lineWidth = lineWidthInput.value;
 
 let isPainting = false;
-let isFilling = false;
-let isEraser = true;
+let isDraw = false;
+let isEraser = false;
+let isStroke = true;
 
-canvas.width = CANVAS_WIDTH;
-canvas.height = CANVAS_HEIGHT;
-
-ctx.lineWidth = theLineWidth.value;
-
-function mouseMove(event) {
-  if (isPainting) {
-    ctx.lineTo(event.offsetX, event.offsetY);
-    ctx.stroke();
-    return;
-  }
+function onLineWidthChange() {
   ctx.beginPath();
-  ctx.moveTo(event.offsetX, event.offsetY);
+  ctx.lineWidth = lineWidthInput.value;
 }
 
-function startingPaint() {
-  isPainting = true;
+function onLineColorChange() {
+  ctx.beginPath();
+  ctx.strokeStyle = colorInput.value;
+  ctx.fillStyle = colorInput.value;
 }
 
-function endingPaint() {
-  isPainting = false;
-}
-
-function lineWidthChange(event) {
-  ctx.lineWidth = event.target.value;
-}
-
-function lineColorChange(event) {
-  ctx.strokeStyle = event.target.value;
-  ctx.fillStyle = event.target.value;
-}
-
-function clickColor(event) {
-  const colorValue = event.target.dataset.color;
-  ctx.strokeStyle = colorValue;
-  ctx.fillStyle = colorValue;
-  theLineColor.value = colorValue;
-}
-
-function onClickModeBtn() {
-  if (isFilling) {
-    modeBtn.innerText = "fill";
-
-    isFilling = false;
+function onFillOrStrokeBtnClick() {
+  if (isStroke) {
+    isStroke = false;
+    fillOrStrokeBtn.innerText = "fill";
   } else {
-    modeBtn.innerText = "draw";
-    isFilling = true;
+    isStroke = true;
+    fillOrStrokeBtn.innerText = "Stroke";
   }
 }
 
-function fillingMode() {
-  if (isFilling) {
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+function onDrawBtnClick() {
+  isDraw = true;
+  if (isDraw) {
+    function onPaintStart(e) {
+      ctx.beginPath();
+      isPainting = true;
+      ctx.moveTo(e.offsetX, e.offsetY);
+    }
+    function onPainting(e) {
+      if (isPainting) {
+        ctx.lineTo(e.offsetX, e.offsetY);
+
+        ctx.stroke();
+      }
+    }
+    function onPaintEnd() {
+      if (isStroke) {
+        isPainting = false;
+      } else {
+        isPainting = false;
+        ctx.fill();
+      }
+    }
+  }
+  canvas.addEventListener("mousedown", onPaintStart);
+  canvas.addEventListener("mousemove", onPainting);
+  canvas.addEventListener("mouseup", onPaintEnd);
+  canvas.addEventListener("mouseout", onPaintEnd);
+}
+
+function onEraserBtnClick() {
+  isEraser = true;
+  isDraw = false;
+  if (isEraser) {
+    ctx.beginPath();
+    ctx.strokeStyle = "white";
+    colorInput.value = "#FFFFFF";
   }
 }
 
-function canvasClear() {
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  return;
+function onEraserEnd() {
+  isEraser = false;
 }
 
-function onClickEraserBtn() {
-  ctx.strokeStyle = "white";
-  modeBtn.innerText = "fill";
-  isFilling = false;
-}
-
-function onFileChange(event) {
-  const file = event.target.files[0];
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-  image.src = url;
-  image.onload = function () {
-    ctx.drawImage(image, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    file.value = null;
-  };
-}
-
-function onTextDoubleClick(event) {
-  const text = textInput.value;
-  if (text !== "") {
-    ctx.save();
-    ctx.lineWidth = 1;
-    ctx.fillText(text, event.offsetX, event.offsetY);
-    ctx.restore();
+function onDestroyBtnClick() {
+  if (window.confirm("모든 작업을 없애시겠습니까?")) {
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, 800, 800);
   }
 }
--0 +
-  function onSaveBtnClick() {
-    const url = canvas.toDataURL();
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "*.png";
-    a.click();
-  };
 
-canvas.addEventListener("dblclick", onTextDoubleClick);
-fileInput.addEventListener("change", onFileChange);
-canvas.addEventListener("mousemove", mouseMove);
-canvas.addEventListener("mousedown", startingPaint);
-canvas.addEventListener("mouseup", endingPaint);
-canvas.addEventListener("mouseleave", endingPaint);
-theLineWidth.addEventListener("change", lineWidthChange);
-theLineColor.addEventListener("change", lineColorChange);
-modeBtn.addEventListener("click", onClickModeBtn);
-canvas.addEventListener("click", fillingMode);
-clearBtn.addEventListener("click", canvasClear);
-eraserBtn.addEventListener("click", onClickEraserBtn);
-saveBtn.addEventListener("click", onSaveBtnClick);
-fontOptions.addEventListener("change", onFontChange);
+function onColorOptionBtnClick(e) {
+  ctx.beginPath();
+  ctx.strokeStyle = e.target.dataset.color;
+  ctx.fillStyle = e.target.dataset.color;
+  colorInput.value = e.target.dataset.color;
+}
 
-colorArray.forEach((theLineColor) => {
-  theLineColor.addEventListener("click", clickColor);
-});
+canvas.addEventListener("mouseout", onEraserEnd);
+
+lineWidthInput.addEventListener("change", onLineWidthChange);
+colorInput.addEventListener("change", onLineColorChange);
+
+drawBtn.addEventListener("click", onDrawBtnClick);
+eraserBtn.addEventListener("click", onEraserBtnClick);
+destroyBtn.addEventListener("click", onDestroyBtnClick);
+fillOrStrokeBtn.addEventListener("click", onFillOrStrokeBtnClick);
+
+colorOptionsBtn.forEach((colorInput) =>
+  colorInput.addEventListener("click", onColorOptionBtnClick)
+);
