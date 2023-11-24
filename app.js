@@ -3,14 +3,20 @@ const ctx = canvas.getContext("2d");
 
 const lineWidthInput = document.getElementById("line-width");
 const colorInput = document.getElementById("line-color");
+const textInput = document.getElementById("text-input");
+const textSizeInput = document.getElementById("text-size");
 
 const drawBtn = document.getElementById("draw-button");
 const eraserBtn = document.getElementById("eraser-button");
 const destroyBtn = document.getElementById("destroy-button");
 const fillOrStrokeBtn = document.getElementById("fill-or-stroke");
+const textBtn = document.getElementById("text-button");
+const textFoSBtn = document.getElementById("text__fill-or-stroke-button");
 const colorOptionsBtn = Array.from(
   document.getElementsByClassName("color-option")
 );
+
+const fontWeightSelect = document.getElementById("font-weight");
 
 canvas.width = 800;
 canvas.height = 800;
@@ -18,10 +24,15 @@ ctx.lineCap = "round";
 ctx.lineJoin = "round";
 ctx.lineWidth = lineWidthInput.value;
 
+let textSize = textSizeInput.value;
+let fontWeight = fontWeightSelect.value;
+
 let isPainting = false;
 let isDraw = false;
 let isEraser = false;
 let isStroke = true;
+let isText = false;
+let isTextFill = true;
 
 function onLineWidthChange() {
   ctx.beginPath();
@@ -37,10 +48,37 @@ function onLineColorChange() {
 function onFillOrStrokeBtnClick() {
   if (isStroke) {
     isStroke = false;
-    fillOrStrokeBtn.innerText = "fill";
+    fillOrStrokeBtn.innerText = "Fill Draw";
   } else {
     isStroke = true;
-    fillOrStrokeBtn.innerText = "Stroke";
+    fillOrStrokeBtn.innerText = "Stroke Draw";
+  }
+}
+
+function onTextBtnClick() {
+  isText = true;
+  if (isText) {
+    function onTextInCanvas(e) {
+      const textValue = textInput.value;
+      if (isTextFill) {
+        ctx.fillText(textValue, e.offsetX, e.offsetY);
+      } else {
+        ctx.strokeText(textValue, e.offsetX, e.offsetY);
+      }
+    }
+    canvas.addEventListener("click", onTextInCanvas);
+  }
+
+  ctx.font = `${textWeight} ${textSize}px`;
+}
+
+function onTextFoSBtnClick() {
+  if (isTextFill) {
+    isTextFill = false;
+    textFoSBtn.innerText = "Stroke Text";
+  } else {
+    isTextFill = true;
+    textFoSBtn.innerText = "Fill Text";
   }
 }
 
@@ -112,6 +150,8 @@ drawBtn.addEventListener("click", onDrawBtnClick);
 eraserBtn.addEventListener("click", onEraserBtnClick);
 destroyBtn.addEventListener("click", onDestroyBtnClick);
 fillOrStrokeBtn.addEventListener("click", onFillOrStrokeBtnClick);
+textFoSBtn.addEventListener("click", onTextFoSBtnClick);
+textBtn.addEventListener("click", onTextBtnClick);
 
 colorOptionsBtn.forEach((colorInput) =>
   colorInput.addEventListener("click", onColorOptionBtnClick)
